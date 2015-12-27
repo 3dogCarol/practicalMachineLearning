@@ -1,22 +1,31 @@
 ---
-title: "Project Experiments for MachineLearning"
+title: "Project for Machine Learning"
 author: "Carol"
 date: "December 17, 2015"
 output: html_document
 ---
-The issue which we investigate is the ability of wearable technology to determine if the user is preforming an exercise correctly. In particular our data contains measurements from wearable devices which measure various aspects of activity. There are 6 participants for whom data is collected while preforming a dumbbell lift in 5 different ways. 
-The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set which contains indicators {A,B,C,D,E}, according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E). A corresponds to the correct way to do the exercise while the other 4 classes are common mistakes.
+#Introduction
+   The issue which we investigate is the ability of wearable technology to determine if the user is preforming an exercise correctly. In particular our data contains measurements from wearable devices which measure various aspects of activity. There are 6 participants for whom data is collected while preforming a dumbbell lift in 5 different ways.
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set which contains indicators {A,B,C,D,E}, according to the specification doing the exercise correctly (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E). A corresponds to the correct way to do the exercise while the other 4 classes are common mistakes.
 Below is the source for the data.
 Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
 
 Read more: http://groupware.les.inf.puc-rio.br/har#ixzz3vLL1gPmJ
 
+#Exploration of Data
+Some of the variables have mostly "NA"s in the columns and others are mostly blank. These columns were eliminated from the data.
+
 The variables eliminated to create a model are shown along with reasoning below. Once these variables are determined a training set and a test set consisting of 75% and 25% respectively of the resulting data set are created. Two models seemed equally good and each is applied to predict the remaining 20 different test cases. 
+
+Several models were tested as predictors. The two with the best results were Random Forests and Boosting Trees. But the Random Forests was the best. See the details below.
+
+#Appendix
 
 ```{r}
 library(caret)
 library(doMC)
-setwd("~/Coursera/DataScience/MachineLearning/Project")
+setwd("/Users/carollawrence/Coursera/DataScience/MachineLearning/Project")
 data <- read.csv("data/pml-training.csv")
 dim(data)
 ```
@@ -74,58 +83,22 @@ dim(data3)
 ```
 
 Variables left to build model
-roll_belt 
-pitch_belt 
-yaw_belt 
-total_accel_belt 
-gyros_belt_x 
-gyros_belt_y 
-gyros_belt_z 
-accel_belt_x
-accel_belt_y 
-accel_belt_z 
-magnet_belt_x 
-magnet_belt_y 
-magnet_belt_z 
-roll_arm 
-pitch_arm 
-yaw_arm
-total_accel_arm 
-gyros_arm_x 
-gyros_arm_y 
-gyros_arm_z 
-accel_arm_x 
-accel_arm_y 
-accel_arm_z 
-magnet_arm_x
-magnet_arm_y 
-magnet_arm_z 
-roll_dumbbell 
-pitch_dumbbell 
-yaw_dumbbell 
-total_accel_dumbbell
-gyros_dumbbell_x 
-gyros_dumbbell_y 
-gyros_dumbbell_z 
-accel_dumbbell_x 
-accel_dumbbell_y 
-accel_dumbbell_z
-magnet_dumbbell_x 
-magnet_dumbbell_y 
-magnet_dumbbell_z 
-roll_forearm 
-pitch_forearm 
-yaw_forearm
-total_accel_forearm 
-gyros_forearm_x 
-gyros_forearm_y 
-gyros_forearm_z 
-accel_forearm_x 
-accel_forearm_y
-accel_forearm_z 
-magnet_forearm_x 
-magnet_forearm_y 
-magnet_forearm_z 
+roll_belt, pitch_belt, yaw_belt, total_accel_belt, 
+gyros_belt_x, gyros_belt_y, gyros_belt_z 
+accel_belt_x, accel_belt_y, accel_belt_z 
+magnet_belt_x, magnet_belt_y, magnet_belt_z 
+roll_arm, pitch_arm, yaw_arm, total_accel_arm 
+gyros_arm_x,gyros_arm_y, gyros_arm_z 
+accel_arm_x, accel_arm_y, accel_arm_z 
+magnet_arm_x, magnet_arm_y, magnet_arm_z 
+roll_dumbbell, pitch_dumbbell, yaw_dumbbell, total_accel_dumbbell
+gyros_dumbbell_x, gyros_dumbbell_y, gyros_dumbbell_z 
+accel_dumbbell_x, accel_dumbbell_y, accel_dumbbell_z
+magnet_dumbbell_x, magnet_dumbbell_y, magnet_dumbbell_z 
+roll_forearm, pitch_forearm, yaw_forearm, total_accel_forearm 
+gyros_forearm_x, gyros_forearm_y, gyros_forearm_z 
+accel_forearm_x, accel_forearm_y, accel_forearm_z 
+magnet_forearm_x, magnet_forearm_y, magnet_forearm_z 
 classe
 
 Divide the data into a training and a testing set, with 75% of data in the training set.
@@ -193,7 +166,7 @@ The accuracy of the Rain Forest model is 0.9914 while the accuracy of the Boosti
  
 Test the data pml-testing.csv with both models.
 ```{r}
-data.testing <- read.csv("data/pml-testing.csv")
+data.testing <- read.csv("/Users/carollawrence/Coursera/DataScience/MachineLearning/Project/data/pml-testing.csv")
 predict(modelFitrf,data.testing)
 predict(modelFitgbm,data.testing)
 ```
