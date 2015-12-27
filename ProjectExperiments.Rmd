@@ -1,0 +1,200 @@
+---
+title: "Project Experiments for MachineLearning"
+author: "Carol"
+date: "December 17, 2015"
+output: html_document
+---
+The issue which we investigate is the ability of wearable technology to determine if the user is preforming an exercise correctly. In particular our data contains measurements from wearable devices which measure various aspects of activity. There are 6 participants for whom data is collected while preforming a dumbbell lift in 5 different ways. 
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set which contains indicators {A,B,C,D,E}, according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E). A corresponds to the correct way to do the exercise while the other 4 classes are common mistakes.
+Below is the source for the data.
+Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
+
+Read more: http://groupware.les.inf.puc-rio.br/har#ixzz3vLL1gPmJ
+
+The variables eliminated to create a model are shown along with reasoning below. Once these variables are determined a training set and a test set consisting of 75% and 25% respectively of the resulting data set are created. Two models seemed equally good and each is applied to predict the remaining 20 different test cases. 
+
+```{r}
+library(caret)
+library(doMC)
+setwd("~/Coursera/DataScience/MachineLearning/Project")
+data <- read.csv("data/pml-training.csv")
+dim(data)
+```
+Many of the columns contain mostly "NA". Count them and remove columns that are mostly "NA".
+```{r}
+NAS <- vector(,160)
+good <- vector(,160)
+j = 0
+for(i in 1:160){ 
+      NAS[i] = sum(is.na(data[,i]))
+      good[i] = 0
+      nas <- sum(is.na(data[,i]))
+      if(nas == 0){
+            good[j]=i
+            j = j+1
+      }
+}
+NAS
+good
+data1 <- data[,good]
+dim(data1)
+```
+These columns are mostly NA
+amplitude_yaw_forearm ,skewness_roll_forearm, skewness_pitch_forearm ,skewness_yaw_forearm ,max_yaw_forearm ,min_yaw_forearm ,kurtosis_roll_forearm, kurtosis_picth_forearm, kurtosis_yaw_forearm,kurtosis_roll_dumbbell, kurtosis_picth_dumbbell, kurtosis_yaw_dumbbell, skewness_roll_dumbbell, skewness_pitch_dumbbell, skewness_yaw_dumbbell ,max_yaw_dumbbell,min_yaw_dumbbell ,amplitude_yaw_dumbbell, kurtosis_roll_arm ,kurtosis_picth_arm ,kurtosis_yaw_arm ,skewness_roll_arm ,skewness_pitch_arm ,skewness_yaw_arm ,
+kurtosis_roll_belt, kurtosis_picth_belt, kurtosis_yaw_belt,skewness_roll_belt, skewness_roll_belt.1, skewness_yaw_belt, max_yaw_belt, min_yaw_belt, amplitude_yaw_belt
+
+Some of the columns contain vary few values. Find these.
+```{r}
+k = 0
+good <- vector(,92)
+mostlyZero <- vector(,92)
+for(j in 1:92){
+      count = 0
+      mostlyZero[j] = 0
+      good[j]=0
+      for(i in 1:19622){
+            if(data1[i,j] == ""){ count = count + 1}
+      }
+      mostlyZero[j] = count 
+      if(count == 0){good[k] = j; k=k+1}
+}
+mostlyZero
+```
+
+Remove these mostly empty columns.
+```{r}
+good
+data2 <- data1[,good]    
+head(data2,1)
+```
+Remove variables - raw_timestamp_part_1, raw_timestamp_part_2,   cvtd_timestamp new_window, num_window. These do not seem to contribute to understanding how well and exercise is being done.
+```{r}
+data3 <- data2[,!(names(data2) %in% c("raw_timestamp_part_1", "raw_timestamp_part_2","cvtd_timestamp","new_window", "num_window"))]
+dim(data3)
+```
+
+Variables left to build model
+roll_belt 
+pitch_belt 
+yaw_belt 
+total_accel_belt 
+gyros_belt_x 
+gyros_belt_y 
+gyros_belt_z 
+accel_belt_x
+accel_belt_y 
+accel_belt_z 
+magnet_belt_x 
+magnet_belt_y 
+magnet_belt_z 
+roll_arm 
+pitch_arm 
+yaw_arm
+total_accel_arm 
+gyros_arm_x 
+gyros_arm_y 
+gyros_arm_z 
+accel_arm_x 
+accel_arm_y 
+accel_arm_z 
+magnet_arm_x
+magnet_arm_y 
+magnet_arm_z 
+roll_dumbbell 
+pitch_dumbbell 
+yaw_dumbbell 
+total_accel_dumbbell
+gyros_dumbbell_x 
+gyros_dumbbell_y 
+gyros_dumbbell_z 
+accel_dumbbell_x 
+accel_dumbbell_y 
+accel_dumbbell_z
+magnet_dumbbell_x 
+magnet_dumbbell_y 
+magnet_dumbbell_z 
+roll_forearm 
+pitch_forearm 
+yaw_forearm
+total_accel_forearm 
+gyros_forearm_x 
+gyros_forearm_y 
+gyros_forearm_z 
+accel_forearm_x 
+accel_forearm_y
+accel_forearm_z 
+magnet_forearm_x 
+magnet_forearm_y 
+magnet_forearm_z 
+classe
+
+Divide the data into a training and a testing set, with 75% of data in the training set.
+```{r}
+registerDoMC(cores = 4)
+set.seed(489)
+inTrain <- createDataPartition(y=data3$classe, p=0.75, list=FALSE)
+training <- data3[inTrain,]
+testing <- data3[-inTrain,]
+dim(training)
+```
+Check the proportions of each classe is contained in the training and testing sets.
+```{r echo=FALSE}
+proportions <- function(input){
+      counts <- vector(,5)
+      l = dim(input)[1]
+      w = dim(input)[2]
+      for(i in 1:l){
+            input[i,w]
+            counts[input[i,w]] = counts[input[i,w]] + 1
+      }
+      print(counts/l)
+}
+proportions(data)
+proportions(training)
+proportions(testing)
+```
+Training and testing are in the same proportion as the classes in the original data.
+
+Boosting with Trees
+```{r}
+set.seed(3456)
+fitControl <- trainControl(method = "repeatedcv",number = 5,repeats=10)
+modelFitgbm <- train(training$classe~.,data=training,method="gbm",trControl = fitControl,verbose=FALSE)
+confusionMatrix(testing$classe,predict(modelFitgbm,testing))
+plot(varImp(modelFitgbm, top=20))
+```
+
+Random Forest
+```{r}
+set.seed(3456)
+fitControl <- trainControl(method = "repeatedcv", number=5, repeats=10)
+modelFitrf <- train(classe~., data = training, method="rf",trControl=fitControl)
+confusionMatrix(testing$classe,predict(modelFitrf,testing))
+plot(varImp(modelFitrf, top=20))
+```
+
+
+```{r}
+pred1 <- predict(modelFitrf,testing)
+pred2 <- predict(modelFitgbm,testing)
+```
+The Rain Forest model has the best accuracy. To check how much each of the models differs we compute the percent of agreement.
+```{r}
+length(pred1)
+length(pred2)
+count = 0
+for(i in 1:length(pred1)){
+      if(pred1[i] == pred2[i]){count = count + 1}
+}
+count/length(pred1)
+
+```
+The accuracy of the Rain Forest model is 0.9914 while the accuracy of the Boosting model is 0.9621 and the two agree on 0.9651 of the classes.
+ 
+Test the data pml-testing.csv with both models.
+```{r}
+data.testing <- read.csv("data/pml-testing.csv")
+predict(modelFitrf,data.testing)
+predict(modelFitgbm,data.testing)
+```
+
